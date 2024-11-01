@@ -1,27 +1,21 @@
 // app/daily-report/page.tsx
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import { useState, useEffect } from "react";
 import {
-  Copy,
-  Download,
-  Share2,
-  Pencil,
-  Save,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
 import Header from "../components/Header";
 import { format, addDays, subDays, startOfWeek, isSameDay } from "date-fns";
-import { useSearchParams } from "next/navigation";
-import { parseISO } from "date-fns";
 import { ja } from "date-fns/locale";
 import api from "../lib/api/reports";
 import { CommitAnalysis } from "../lib/api/reports";
 import DailyReportEditor from "../components/DailyReportEditor";
 import { reportStorage, commitStorage } from "../lib/storage/reports"; // 追加
 
-import { FileEdit } from "lucide-react"; // 日報作成アイコン用
 
 // 仮のユーザーデータ
 const user = {
@@ -56,24 +50,22 @@ export default function DailyReport() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const searchParams = useSearchParams();
-  const dateParam = searchParams.get("date");
   const [analysisData, setAnalysisData] = useState<CommitAnalysis | null>(null);
+
+  type CommitData = {
+    sha: string;
+    commit: {
+      message: string;
+      author: {
+        name: string;
+        date: string;
+      };
+    };
+  };
   const [currentDateCommits, setCurrentDateCommits] = useState<CommitData[]>(
     []
   );
 
-  // URLパラメータから日付を設定
-  useEffect(() => {
-    if (dateParam) {
-      try {
-        const parsedDate = parseISO(dateParam);
-        setCurrentDate(parsedDate);
-      } catch (error) {
-        console.error("Invalid date parameter:", error);
-      }
-    }
-  }, [dateParam]);
 
   // コミット履歴の取得と保存
   const handleGenerateReport = async () => {
@@ -136,7 +128,7 @@ export default function DailyReport() {
     setCurrentDateCommits(commits);
   }, [currentDate]);
 
-  // 追加: 日付が変更されたときに日報データを読み込む
+  // 日付が変更されたときに日報データを読み込む
   useEffect(() => {
     const formattedDate = format(currentDate, "yyyy-MM-dd");
     const savedReport = reportStorage.getReport(formattedDate);
@@ -150,13 +142,14 @@ export default function DailyReport() {
     }
   }, [currentDate]);
 
-  // 修正: 保存ハンドラー
+  // 保存ハンドラー
   const handleSave = () => {
-    // 追加: ローカルストレージに保存
+    // ローカルストレージに保存
     const formattedDate = format(currentDate, "yyyy-MM-dd");
     reportStorage.saveReport(formattedDate, reportTitle, reportContent);
     setIsEditing(false);
   };
+
   // 今週の日付を計算
   const startOfCurrentWeek = startOfWeek(currentDate, { locale: ja });
   const weekDays = Array.from({ length: 7 }).map((_, index) => {
@@ -188,7 +181,6 @@ export default function DailyReport() {
         <div className="flex gap-8">
           {/* 日報エディターコンポーネント */}
           <div className="w-8/12 bg-white rounded-lg border">
-            // DailyReportEditorのprops部分を更新
             <DailyReportEditor
               currentDate={currentDate}
               isEditing={isEditing}
@@ -197,15 +189,7 @@ export default function DailyReport() {
               reportContent={reportContent}
               reportTitle={reportTitle}
               onEdit={() => setIsEditing(true)}
-              onSave={() => {
-                const formattedDate = format(currentDate, "yyyy-MM-dd");
-                reportStorage.saveReport(
-                  formattedDate,
-                  reportTitle,
-                  reportContent
-                );
-                setIsEditing(false);
-              }}
+              onSave={handleSave}
               onContentChange={(content) => setReportContent(content)}
               onTitleChange={(title) => setReportTitle(title)} // 追加
               onGenerateReport={handleGenerateReport}
@@ -261,7 +245,7 @@ export default function DailyReport() {
                               : ""
                           }
                           ${
-                            // 追加: 日報が存在する日付は青い枠線で表示
+                            // 日報が存在する日付は青い枠線で表示
                             reportStorage.hasReport(
                               format(day.fullDate, "yyyy-MM-dd")
                             ) && !isSameDay(day.fullDate, currentDate)

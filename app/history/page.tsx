@@ -36,9 +36,9 @@ const mockReports = [
 ];
 
 // 祝日データ（実際にはAPIから取得など）
-const holidays = {
-  "2024-01-01": "元日",
-  "2024-01-08": "成人の日",
+const holidays: { [key: string]: string } = {
+  "2024-01-01": "New Year's Day",
+  "2024-01-08": "Some Holiday",
 };
 
 export default function History() {

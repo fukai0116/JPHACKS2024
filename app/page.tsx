@@ -1,11 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
 import Link from "next/link";
-import { FileText, LogIn, Notebook } from "lucide-react"; // アイコン用
+import { LogIn, Notebook } from "lucide-react"; // アイコン用
 import Calendar from "./components/calendar/Calendar";
 import Header from "./components/Header";
-import Image from "next/image";
 
 export default function Home() {
   return (
